@@ -1,0 +1,18 @@
+# Секреты — никогда в репозиторий (П7)
+.env
+
+# Данные, порождаемые запуском
+data/chroma/
+*.db
+security_logs.txt
+
+# Бандлы для переноса и сдачи — собираются вне проекта, но на случай ошибки
+*.bundle
+data/raw/*.pdf
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
