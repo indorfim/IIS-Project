@@ -99,8 +99,8 @@ def build_messages(role: str, question: str, chunks: list[Chunk],
     chunks_text = format_chunks(chunks)
     final_content = (
         f"Найденные фрагменты:\n{chunks_text}\n\n"
-        f"Вопрос пользователя: {text}"
-    ) if chunks else text
+        f"Вопрос пользователя: {question}"
+    ) if chunks else question
     
     messages.append({"role": "user", "content": final_content})
     

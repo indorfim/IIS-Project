@@ -82,7 +82,7 @@ class OllamaClient:
         }
 
         try:
-            response = requests.post(url, json=payload, timeout=60)
+            response = requests.post(url, json=payload, timeout=120) # Время было увеличено, так как видеокарта не справилась за отведённое время
             response.raise_for_status()
             data = response.json()
             

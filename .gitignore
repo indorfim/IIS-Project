@@ -24,3 +24,4 @@ venv/
 .venv2/
 venv2/
 .pytest_cache/
+.python-version
