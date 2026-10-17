@@ -28,6 +28,8 @@ llm_client.py — доступ к языковой модели за общим 
 
 import config
 from contracts import LLMClient
+import requests
+import json
 
 
 class GigaChatClient:
@@ -67,18 +69,35 @@ class OllamaClient:
         self.model = config.OLLAMA_MODEL
         self.host = config.OLLAMA_HOST
 
-    def generate(self, messages: list[dict], temperature: float = 0.3) -> str:
-        """POST на {host}/api/chat с телом {"model", "messages", "stream": False}.
 
-        Ответ — в data["message"]["content"].
-        У reasoning-моделей ответ приходит с блоком <think>...</think> — решите,
-        показывать его пользователю или вырезать, и обоснуйте выбор на защите.
-        """
-        raise NotImplementedError("П4: реализуйте вызов Ollama")
+    def generate(self, messages: list[dict], temperature: float) -> str:
+        url = f"{self.host}/api/chat"
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "stream": False,
+            "options": {
+                "temperature": temperature
+            }
+        }
+
+        try:
+            response = requests.post(url, json=payload, timeout=60)
+            response.raise_for_status()
+            data = response.json()
+            
+            # DeepSeek-R1 возвращает теги рассуждений. Мы можем их вырезать, чтобы не захламлять ответ пользователю.
+            content = data.get("message", {}).get("content", "")
+            if "</think>" in content:
+                content = content.split("</think>")[-1].strip()
+                
+            return content
+        except Exception as e:
+            return f"Ошибка при обращении к Ollama: {str(e)}"
 
     def count_tokens(self, text: str) -> int:
-        """Оценка длины в токенах — та же логика, что и в GigaChatClient."""
-        raise NotImplementedError("П4: реализуйте подсчёт токенов")
+        # Примерная оценка (грубым подсчётом: 3 символа - 1 токен)
+        return len(text) // 3
 
 
 def build_client() -> LLMClient:

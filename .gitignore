@@ -14,10 +14,13 @@ security_logs.txt
 
 # Тестовые файлы для отладки
 test_categories.py
+test_p4.py
 
 # Python
 __pycache__/
 *.py[cod]
 .venv/
 venv/
+.venv2/
+venv2/
 .pytest_cache/

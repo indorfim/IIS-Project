@@ -1,4 +1,4 @@
-'''
+
 from orchestrator import Orchestrator
 
 o = Orchestrator()
@@ -28,3 +28,4 @@ for c in o.tools.search("ваш вопрос из gold_dataset"):
     print(f"{c.score:.3f} {c.source}{page} [{c.category}]")
 
 o.close()
+'''
