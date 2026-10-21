@@ -5,7 +5,6 @@
 
 # Данные, порождаемые запуском
 data/chroma/
-data/raw/*.pdf
 *.db
 security_logs.txt
 
