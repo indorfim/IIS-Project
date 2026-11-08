@@ -14,6 +14,7 @@ security_logs.txt
 # Тестовые файлы для отладки
 test_categories.py
 test_p4.py
+commit_text.txt
 
 # Python
 __pycache__/
