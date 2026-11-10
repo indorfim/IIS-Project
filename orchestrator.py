@@ -60,7 +60,7 @@ class Orchestrator:
 
     TRANSITIONS: dict[str, set[str]] = {
     "analyst": {"analyst", "clarifier"},
-    "clarifier": {"analyst", "clarifier"},
+    "clarifier": {"analyst"},
     }
 
     INTENT_TO_ROLE: dict[str, str] = {
