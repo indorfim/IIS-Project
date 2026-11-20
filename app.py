@@ -28,7 +28,7 @@ import streamlit as st
 import config
 from orchestrator import Orchestrator
 
-st.set_page_config(page_title="Справочный ассистент", page_icon="🔎")
+st.set_page_config(page_title="Справочник по испытаниям и постановке продукции", page_icon="🔎")
 
 
 @st.cache_resource
@@ -46,8 +46,10 @@ if "history" not in st.session_state:
 orchestrator = get_orchestrator()
 
 # TODO (П6): замените заголовок и подсказку на свои
-st.title("Справочный ассистент")
-st.caption("Отвечает по загруженной базе знаний и ссылается на источники.")
+st.title("Справочник по испытаниям и постановке продукции")
+st.caption("Справочная система по ГОСТ 15.309-98, ГОСТ Р 15.301-2016 и ГОСТ Р 2.106-2019: "
+    "порядок испытаний, постановка на производство и оформление документов со ссылками на источники."
+)
 
 # Готовая часть, не убирать: на офлайн-заглушке ответы выглядят осмысленно,
 # и без плашки это легко принять за работающую систему — в том числе на защите.
@@ -71,7 +73,7 @@ for role, content in st.session_state.history:
     with st.chat_message(role):
         st.markdown(content)
 
-if question := st.chat_input("Задайте вопрос по базе знаний"):
+if question := st.chat_input("Задайте вопрос по ГОСТ 15.309, ГОСТ Р 15.301 или ГОСТ Р 2.106…"):
     st.session_state.history.append(("user", question))
     with st.chat_message("user"):
         st.markdown(question)
