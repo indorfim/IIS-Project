@@ -26,6 +26,7 @@ guardrails.py — слой валидации ввода перед обраще
 
 import re
 from datetime import datetime
+from pathlib import Path
 
 import config
 from contracts import GuardResult
@@ -41,8 +42,31 @@ PATTERNS: list[tuple[str, re.Pattern]] = [
         r"(системный\s+промпт|system\s*prompt|исходные\s+инструкции)", re.IGNORECASE)),
     # TODO (П7): ролевой обход («представь, что правил не существует», «ты теперь…»),
     # попытка сменить язык вывода на служебный, запрос выдать содержимое индекса целиком
+    ("roleplay_jailbreak", re.compile(
+        r"("
+        r"представь\s*,?\s*что\s+(правил|ограничений|запретов)\s+(не\s+существует|нет)"
+        r"|ты\s+теперь\s+(другой|иной|новый)\s+(ассистент|бот|помощник|модель)"
+        r"|в\s+режиме\s+без\s+(ограничений|правил|цензуры|фильтров)"
+        r"|действуй\s+как\s+(необузданный|свободный|обычный\s+чат-?бот\s+без\s+правил)"
+        r")", re.IGNORECASE)),
+    ("index_dump", re.compile(
+        r"("
+        r"(выдай|выгрузи|покажи|выведи|раскрой)\s+(весь\s+|всё\s+|целиком\s+)?"
+        r"(содержимое\s+(индекса|базы\s+знаний|корпуса|документов)|все\s+документы\s+из\s+(индекса|базы))"
+        r"|содержимое\s+индекса\s+целиком"
+        r")", re.IGNORECASE)),
+    ("format_or_language_switch", re.compile(
+        r"("
+        r"(переключи(сь)?|переведи|выводи\s+ответ)\s+(на\s+)?"
+        r"(служебный\s+формат|json|xml|yaml|raw|debug|отладочный\s+формат)"
+        r"|(отвечай|пиши|говори)\s+(только|исключительно|строго)\s+"
+        r"(на\s+английском|по-английски|на\s+немецком|на\s+французском|на\s+китайском|на\s+другом\s+языке)"
+        r")", re.IGNORECASE)),
 ]
 
+def _get_log_path() -> Path:
+    raw_path = getattr(config, "SECURITY_LOG", "security_logs.txt")
+    return Path(raw_path)
 
 def check(text: str) -> GuardResult:
     """Проверить пользовательский ввод.
@@ -56,6 +80,19 @@ def check(text: str) -> GuardResult:
     ни один из десяти вопросов не должен блокироваться.
     """
     # TODO (П7): пройти по PATTERNS и вернуть вердикт
+    if not text or not text.strip():
+        return GuardResult(allowed=True)
+
+    for pattern_name, pattern in PATTERNS:
+        match = pattern.search(text)
+        if match:
+            matched_text = match.group(0)
+            return GuardResult(
+                allowed=False,
+                reason=pattern_name,
+                matched=[matched_text],
+            )
+
     return GuardResult(allowed=True)
 
 
@@ -67,4 +104,24 @@ def log_attempt(session_id: str, text: str, result: GuardResult) -> None:
     данные, а лог не защищён (152-ФЗ, Л7).
     """
     # TODO (П7): дописать строку в config.SECURITY_LOG
+    if result.allowed:
+        return None
+
+    log_path = _get_log_path()
+    if log_path.parent and str(log_path.parent) not in ("", "."):
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now().isoformat(timespec="seconds")
+    sanitized_text = re.sub(r"\s+", " ", (text or "")).strip()[:200]
+    reason = result.reason or "unknown_pattern"
+    matched_repr = ",".join(result.matched) if getattr(result, "matched", None) else ""
+
+    line = (
+        f"{timestamp} | session={session_id} | pattern={reason} "
+        f"| matched={matched_repr!r} | input={sanitized_text!r}\n"
+    )
+
+    with log_path.open("a", encoding="utf-8") as f:
+        f.write(line)
+
     return None
