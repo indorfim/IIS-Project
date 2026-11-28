@@ -55,9 +55,9 @@ BASELINE = config.DATA_DIR / "finops_baseline.json"
 # Эталонный диалог: одинаковый до и после оптимизации, иначе замеры несравнимы.
 # ЗАМЕНИТЕ на вопросы своего домена, но потом не меняйте между двумя прогонами.
 REFERENCE_DIALOG = [
-    "ЗАМЕНИТЕ: первый вопрос по вашему домену",
-    "ЗАМЕНИТЕ: уточняющий вопрос, опирающийся на первый ответ",
-    "ЗАМЕНИТЕ: вопрос из другого раздела базы знаний",
+    "Какая последовательность действий при проведении приёмочных испытаний?",
+    "А кто именно подписывает и утверждает документ о результатах этих испытаний?",
+    "Как правильно поставить продукцию на производство по ГОСТ?",
 ]
 
 
@@ -130,7 +130,29 @@ def estimate_tco(measurement: Measurement, dialogs_per_day: int,
     как допущение. Вторая: считайте вход и выход раздельно до самого конца, их
     цены отличаются в разы, и усреднение искажает результат.
     """
-    raise NotImplementedError("П8: реализуйте расчёт TCO")
+    if measurement.turns <= 0:
+        raise ValueError("measurement.turns должен быть больше 0")
+
+    prompt_per_turn = measurement.prompt_tokens / measurement.turns
+    completion_per_turn = measurement.completion_tokens / measurement.turns
+
+    dialog_prompt_tokens = prompt_per_turn * turns_per_dialog
+    dialog_completion_tokens = completion_per_turn * turns_per_dialog
+
+    per_dialog = (
+        dialog_prompt_tokens / 1_000_000 * config.PRICE_INPUT_PER_1M
+        + dialog_completion_tokens / 1_000_000 * config.PRICE_OUTPUT_PER_1M
+    )
+    per_day = per_dialog * dialogs_per_day
+    per_month = per_day * 30
+    per_year = per_day * 365
+
+    return {
+        "per_dialog": per_dialog,
+        "per_day": per_day,
+        "per_month": per_month,
+        "per_year": per_year,
+    }
 
 
 def compare(before: Measurement, after: Measurement,
